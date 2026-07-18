@@ -1,0 +1,48 @@
+# ── Secrets & data ──────────────────────────────────────────────────────────
+.env
+.env.*
+*.env
+**/.env
+*.db
+*.sqlite
+*.sqlite3
+backend/vakil_ai.db
+
+# ── Python / backend ────────────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ── Node / Next.js website ──────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+website/dev.log
+website/backend.log
+npm-debug.log*
+
+# ── Flutter app ─────────────────────────────────────────────────────────────
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/doc/api/
+*.iml
+.idea/
+
+# ── OS / editor / logs ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+
+# ── Build outputs ───────────────────────────────────────────────────────────
+website/tsconfig.tsbuildinfo
+next-env.d.ts

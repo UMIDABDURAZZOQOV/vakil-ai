@@ -83,14 +83,30 @@ app's real features wired to the backend. Dark-first, glass cards, aurora blobs,
 Running `npm run build` (production) while `next dev` is running corrupts `.next` → "Cannot find
 module './xxx.js'". Fix: stop dev, `rm -rf .next`, restart. Don't build while dev is running.
 
+## On GitHub (2026-07-18)
+- **Repo: https://github.com/UMIDABDURAZZOQOV/vakil-ai** (public). ONE repo for the whole project —
+  `backend/` + `vakil_ai/` (Flutter) + `website/` all together (the user wanted app + web in one).
+  Git was initialised at the project root (`Desktop/Vakil AI/`). `ilm-ai-flutter` and the other Ilm
+  AI repos were NOT touched — this is a brand-new repo.
+- **`.gitignore`** (project root) excludes all secrets/big dirs: `.env`, `*.db` (incl.
+  `backend/vakil_ai.db`), `venv/`, `node_modules/`, `.next/`, Flutter `build/` + `.dart_tool/`, logs.
+  Verified nothing sensitive was committed.
+- **`README.md`** — in ENGLISH (the user asked). Has 4 screenshots under `website/screenshots/`:
+  `landing.png`, `login.png`, `register.png` (web) + `backend-api.png` (FastAPI Swagger `/docs`).
+- **Screenshots were captured with Edge headless** (`msedge.exe --headless=new --screenshot=... 
+  --virtual-time-budget=7000`). Key lesson: **need `--virtual-time-budget` (~7s)** so React hydrates
+  and framer-motion mount animations finish, else the page is blank; and `whileInView` (scroll-
+  triggered) sections stay invisible in a headless capture, so shoot at viewport height (hero renders
+  via mount `animate`, not scroll). Swagger `/docs` also needs the time budget to render.
+
 ## Status (2026-07-18)
 - Backend: works locally (17 routes), needs `GEMINI_API_KEY` for real AI; CORS still `*`.
 - Flutter app: reviewed, clean.
 - Website: full feature parity with the app (auth, upload, analysis, chat, settings, premium),
-  3 languages, dark/light, animated. Built & building cleanly; not deployed yet.
+  3 languages, dark/light, animated. Built cleanly; pushed to GitHub; **not deployed yet**.
 
 ## Planned next (not done yet)
-- Deploy: push `website/` to GitHub → Vercel; backend → Render (like Ilm AI). Set `NEXT_PUBLIC_API_URL`
-  to the prod backend, tighten backend CORS to the web origin, add real Payme/Click + Gemini keys.
+- Deploy: `website/` → Vercel; `backend/` → Render (like Ilm AI). Set `NEXT_PUBLIC_API_URL` to the
+  prod backend, tighten backend CORS to the web origin, add real Payme/Click + Gemini keys.
 - Optional: a dedicated web camera-scan UX (upload already accepts images), history search,
   Telegram-link flow on web.

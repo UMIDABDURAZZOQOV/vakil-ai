@@ -1,53 +1,60 @@
 <div align="center">
   <img src="./vakil_ai_bot_logo.png" width="88" alt="Vakil AI" />
   <h1>Vakil AI</h1>
-  <p><b>Sizning professional yuridik yordamchingiz</b><br/>
-  AI-powered legal-document assistant for Uzbekistan — uz / ru / en</p>
+  <p><b>Your professional legal assistant</b><br/>
+  An AI-powered legal-document assistant for Uzbekistan — uz / ru / en</p>
 </div>
 
 ---
 
-Vakil AI ("vakil" = advokat) — huquqiy hujjatlar uchun **sun'iy intellekt yordamchisi**. Foydalanuvchi
-hujjatni (PDF / matn / rasm) yuklaydi, AI esa:
+Vakil AI ("vakil" = lawyer) is an **AI assistant for legal documents**. A user uploads a document
+(PDF / text / image) and the AI:
 
-- ⚠️ **xavfli bandlarni** aniqlaydi (yuqori / o'rta / past)
-- 📝 oddiy tilda **qisqacha xulosa** yozadi
-- 📅 **muhim sanalar va muddatlarni** ajratadi
-- 💬 hujjat bo'yicha **suhbatlashadi** — javob faqat shu hujjat asosida (to'qib chiqarmaydi)
+- ⚠️ detects **risky clauses** (high / medium / low)
+- 📝 writes a plain-language **summary**
+- 📅 extracts **key dates and deadlines**
+- 💬 lets you **chat about the document** — answers are grounded strictly in that document (no hallucination)
 
-Bepul tarif: oyiga 2 hujjat · Premium: 49 000 so'm/oy (**Payme / Click**).
+Free tier: 2 documents/month · Premium: 49,000 UZS/month (**Payme / Click**).
 
-## 🖼 Screenshots (web)
+## 🖼 Screenshots
 
-| Landing | Kirish | Ro'yxatdan o'tish |
+**Web app**
+
+| Landing | Log in | Sign up |
 |---|---|---|
 | ![Landing](./website/screenshots/landing.png) | ![Login](./website/screenshots/login.png) | ![Register](./website/screenshots/register.png) |
 
-## 📦 Loyiha tuzilishi
+**Backend API (FastAPI · Swagger)**
+
+![Backend API](./website/screenshots/backend-api.png)
+
+## 📦 Project structure
 ```
 Vakil AI/
 ├─ backend/    FastAPI API (async SQLAlchemy + SQLite, Gemini, Payme/Click, Telegram)
-├─ vakil_ai/   Flutter mobil ilova (uz/ru/en)
-└─ website/    Next.js 14 web ilova — landing + to'liq funksional web app
+├─ vakil_ai/   Flutter mobile app (uz/ru/en)
+└─ website/    Next.js 14 web app — landing + full functional web app
 ```
-Ikkala mijoz (mobil + web) **bitta backend**ni ishlatadi.
+Both clients (mobile + web) use the **same backend**.
 
-## ✨ Xususiyatlar
-- **Hujjat tahlili** — xavf darajasi, xulosa, xavfli bandlar, muhim sanalar
-- **AI suhbat** — hujjatga asoslangan, aniq javoblar (`gemini-2.5-flash`, kalitsiz fallback bilan)
-- **Auth** — telefon/email + parol (bcrypt + JWT)
-- **Obuna** — Payme va Click orqali haqiqiy to'lov
-- **3 til** (uz/ru/en) + **dark/light** tema (web)
-- **Telegram** integratsiyasi
+## ✨ Features
+- **Document analysis** — risk level, summary, risky clauses, key dates
+- **AI chat** — document-grounded, accurate answers (`gemini-2.5-flash`, with an offline fallback)
+- **Auth** — phone/email + password (bcrypt + JWT)
+- **Subscriptions** — real payments via Payme and Click
+- **3 languages** (uz/ru/en) + **dark/light** theme (web)
+- **Telegram** integration
 
-## 🛠 Ishga tushirish
+## 🛠 Getting started
 
 **Backend:**
 ```bash
 cd backend
 python -m venv venv && venv/Scripts/pip install -r requirements.txt
-# backend/.env ga GEMINI_API_KEY (va Payme/Click/Telegram kalitlarini) qo'ying
+# put GEMINI_API_KEY (and Payme/Click/Telegram keys) in backend/.env
 venv/Scripts/python -m uvicorn app.main:app --port 8000
+# API docs: http://localhost:8000/docs
 ```
 
 **Web (website):**
@@ -58,15 +65,15 @@ npm install
 npm run dev
 ```
 
-**Mobil (Flutter):**
+**Mobile (Flutter):**
 ```bash
 cd vakil_ai
 flutter pub get && flutter run
 ```
 
-## 🔒 Xavfsizlik
-Sirlar (`.env`, `*.db`, `venv`, `node_modules`) `.gitignore` orqali repozitoriyaga kirmaydi.
-Ishlab chiqarishdan oldin backend CORS'ini haqiqiy web domenига torайting.
+## 🔒 Security
+Secrets (`.env`, `*.db`, `venv`, `node_modules`) are kept out of the repo via `.gitignore`.
+Before production, tighten the backend CORS to the real web origin.
 
-## ⚖️ Eslatma
-Vakil AI umumiy ma'lumot beradi va professional yuridik maslahat o'rnini bosmaydi.
+## ⚖️ Disclaimer
+Vakil AI provides general information and is not a substitute for professional legal advice.

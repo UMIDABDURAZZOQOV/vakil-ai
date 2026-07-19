@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite+aiosqlite:///./vakil_ai.db"
 
+    # Comma-separated list of allowed web origins, or "*" for any (dev only).
+    allowed_origins: str = "*"
+
     gemini_api_key: str | None = None
     free_tier_document_limit: int = 2
 

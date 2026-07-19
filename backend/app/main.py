@@ -18,10 +18,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 
+# Origins from ALLOWED_ORIGINS env (comma-separated), or "*" for any. The web
+# app authenticates with a Bearer token (not cookies), so credentials aren't
+# needed and "*" is safe; when specific origins are set we allow credentials too.
+_origins = [o.strip() for o in settings.allowed_origins.split(",") if o.strip()]
+_allow_all = _origins == ["*"] or not _origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten to the real app/web origins before production
-    allow_credentials=True,
+    allow_origins=["*"] if _allow_all else _origins,
+    allow_credentials=not _allow_all,
     allow_methods=["*"],
     allow_headers=["*"],
 )

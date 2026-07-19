@@ -17,7 +17,8 @@ def _normalize_db_url(url: str) -> str:
     return url
 
 
-DATABASE_URL = _normalize_db_url(settings.database_url)
+# An empty DATABASE_URL (e.g. the Render env var left blank) falls back to SQLite.
+DATABASE_URL = _normalize_db_url(settings.database_url.strip() or "sqlite+aiosqlite:///./vakil_ai.db")
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_async_engine(DATABASE_URL, echo=False, connect_args=connect_args)

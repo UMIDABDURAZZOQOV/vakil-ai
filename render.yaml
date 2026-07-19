@@ -1,11 +1,15 @@
-# Render blueprint for the Vakil AI backend + Postgres.
-# In Render: New → Blueprint → pick this repo. It reads this file and creates
-# the database + web service. Then fill in the `sync: false` secrets in the
-# service's Environment tab (GEMINI_API_KEY, ALLOWED_ORIGINS, payment keys, etc.).
-
-databases:
-  - name: vakil-ai-db
-    plan: free
+# Render blueprint for the Vakil AI backend.
+# In Render: New → Blueprint → pick this repo → Apply. Then fill in the
+# `sync: false` secrets in the service's Environment tab (GEMINI_API_KEY,
+# ALLOWED_ORIGINS, payment keys).
+#
+# NOTE ON THE DATABASE: Render's free plan allows only ONE free Postgres per
+# account, so this blueprint does NOT create one (it would clash with an existing
+# free db). The backend runs on its built-in SQLite by default — fine for a test
+# launch, but the data is EPHEMERAL (reset on redeploy/restart). For persistent
+# data, create a free Postgres elsewhere (e.g. neon.tech) and set DATABASE_URL in
+# the Environment tab to its `postgresql://…` URL — the backend auto-converts it
+# to the async driver.
 
 services:
   - type: web
@@ -17,12 +21,12 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: vakil-ai-db
-          property: connectionString
       - key: SECRET_KEY
         generateValue: true
+      # Optional: a persistent Postgres URL (e.g. from neon.tech). Leave unset to
+      # use the built-in ephemeral SQLite.
+      - key: DATABASE_URL
+        sync: false
       # Your Vercel web origin(s), comma-separated, e.g. https://vakil-ai.vercel.app
       - key: ALLOWED_ORIGINS
         sync: false

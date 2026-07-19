@@ -21,6 +21,10 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
+      # Pin Python — Render's default (3.14) has no prebuilt wheel for
+      # pydantic-core and tries (and fails) to build it from Rust source.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: SECRET_KEY
         generateValue: true
       # Optional: a persistent Postgres URL (e.g. from neon.tech). Leave unset to

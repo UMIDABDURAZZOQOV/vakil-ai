@@ -1,0 +1,24 @@
+# Only the Next.js `website/` is deployed (project Root Directory = website).
+# Keep everything else out of the upload so we don't hit Vercel's file-size limit.
+/.git
+/backend
+/vakil_ai
+/vakil_ai_bot_logo.png
+/README.md
+/CLAUDE.md
+/render.yaml
+
+# Build/deps at any level (Vercel installs + builds fresh)
+node_modules
+.next
+out
+build
+.dart_tool
+.pub-cache
+.flutter-plugins
+
+# Data / logs
+*.db
+*.sqlite
+*.sqlite3
+*.log

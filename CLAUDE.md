@@ -14,8 +14,8 @@ machines/sessions.
 - `backend/` — **FastAPI** API (async SQLAlchemy + SQLite, Gemini AI, Payme/Click, Telegram bot).
   Serves both the mobile app and the web app. Runs with its own `venv`.
 - `vakil_ai/` — **Flutter** mobile app (also has a `web/` folder). The original product.
-- `website/` — **Next.js 14 web app** (BUILT THIS SESSION 2026-07-18) — a full marketing landing +
-  functional web app that talks to the same backend. Not a git repo yet.
+- `website/` — **Next.js 14 web app** — a full marketing landing + functional web app that talks to
+  the same backend. In the project's git repo; **deployed to Vercel** (see Deployment).
 - `vakil_ai_bot_logo.png` — the brand logo (copied into `website/public/vakil-logo.png`).
 
 ## Brand (from `vakil_ai/lib/core/theme/app_colors.dart`)
@@ -38,7 +38,12 @@ FastAPI, prefix **`/api/v1`**, Bearer-JWT auth (`app/api/deps.py::get_current_us
 - **Config** (`app/core/config.py`): `free_tier_document_limit=2`, `premium_price_uzs=49000`,
   Payme/Click keys, `telegram_bot_token`. **Run:** `backend/venv/Scripts/python.exe -m uvicorn
   app.main:app --port 8000`.
-- **CORS** currently `allow_origins=["*"]` — tighten to the real web origin before production.
+- **CORS** reads `ALLOWED_ORIGINS` (comma-separated) from env, default `*`. In production on Render
+  it is now set to the real web origins (see Deployment). When not `*`, `allow_credentials` stays
+  False and auth is Bearer-token (not cookies), so a restricted origin list is safe.
+- **DB URL** `app/db/base.py::_normalize_db_url()` accepts any `DATABASE_URL` — rewrites
+  `postgres://`/`postgresql://` → `postgresql+asyncpg://`; empty falls back to SQLite. `asyncpg` is in
+  requirements. So dropping in a Neon Postgres URL "just works".
 
 ## Flutter app (`vakil_ai/`) — reviewed, clean
 Screens: splash, onboarding, auth (welcome/login/register), dashboard, scanner (camera),
@@ -99,14 +104,77 @@ module './xxx.js'". Fix: stop dev, `rm -rf .next`, restart. Don't build while de
   triggered) sections stay invisible in a headless capture, so shoot at viewport height (hero renders
   via mount `animate`, not scroll). Swagger `/docs` also needs the time budget to render.
 
-## Status (2026-07-18)
-- Backend: works locally (17 routes), needs `GEMINI_API_KEY` for real AI; CORS still `*`.
-- Flutter app: reviewed, clean.
-- Website: full feature parity with the app (auth, upload, analysis, chat, settings, premium),
-  3 languages, dark/light, animated. Built cleanly; pushed to GitHub; **not deployed yet**.
+## Deployment — LIVE (2026-07-19 / 20)
 
-## Planned next (not done yet)
-- Deploy: `website/` → Vercel; `backend/` → Render (like Ilm AI). Set `NEXT_PUBLIC_API_URL` to the
-  prod backend, tighten backend CORS to the web origin, add real Payme/Click + Gemini keys.
-- Optional: a dedicated web camera-scan UX (upload already accepts images), history search,
-  Telegram-link flow on web.
+Both halves are deployed and verified end-to-end (register → login → `/users/me` → CORS all pass).
+
+### Frontend → Vercel
+- **Live URL: https://vakil-ai-uz.vercel.app** (full app: `/`, `/login`, `/register`, `/app`,
+  `/app/[id]`, `/app/premium`, `/app/settings`).
+- Vercel account **pubgmobile200820102009@gmail.com**, project **`vakil-ai`**
+  (id `prj_SmSC9puS9UY85KmW07N7zRMjL7KS`), **Root Directory = `website`**, Framework Next.js.
+- Env: `NEXT_PUBLIC_API_URL = https://vakil-ai-backend-8yqj.onrender.com` (Production).
+- The name **`vakil-ai.vercel.app` is owned by a DIFFERENT account** — cannot be claimed (Vercel
+  subdomains are globally unique). So we aliased the deployment to the free **`vakil-ai-uz.vercel.app`**
+  (`vercel alias set <deployment> vakil-ai-uz.vercel.app`). Other free names if we ever switch:
+  `vakil-app`, `vakiluz`, `vakil-legal-ai`.
+- **Deployment Protection was ON** (Vercel Authentication / SSO) → every URL 302-redirected to
+  `vercel.com/sso-api`. Disabled with **`vercel project protection disable vakil-ai --sso`**
+  (`ssoProtection:false`). Without this the site is not public.
+- **Deploy method** (the project's git-based prod URL `vakil-ai-ebon.vercel.app` was dead/404, so we
+  deployed from the CLI): `vercel deploy --prod --yes --cwd "<repo root>" --token <TOKEN>`. The CLI
+  respects the project's `Root Directory=website`, so deploy **from the repo root**, not from inside
+  `website/`.
+  - **Gotcha:** deploying from the repo root first uploaded **856 MB** and failed with
+    *"File size limit exceeded (100 MB)"* (it swept in `backend/`, `vakil_ai/` Flutter, `.git`).
+    Fixed by adding a **`.vercelignore`** at the repo root that excludes `/.git /backend /vakil_ai`
+    and all `node_modules/.next/build/.dart_tool` — then the upload is just the `website/` source.
+
+### Backend → Render
+- **Live URL: https://vakil-ai-backend-8yqj.onrender.com** (`/api/v1/health` → 200, `/docs` works).
+- Render service **`vakil-ai-backend`** (id `srv-d9e41djrjlhs73bm7rlg`), blueprint `render.yaml`.
+- **`ALLOWED_ORIGINS`** set (via Render API) to
+  `https://vakil-ai-uz.vercel.app,https://vakil-ai.com,https://www.vakil-ai.com` — CORS now echoes the
+  specific origin, no longer `*`. Setting an env var via API does **not** auto-deploy; had to trigger
+  a deploy (`POST /v1/services/<id>/deploys`) for it to take effect.
+- **Python pinned to 3.12.7** (`backend/.python-version` + `PYTHON_VERSION` env) — Render's default
+  3.14 has no pydantic-core wheel and the Rust build fails.
+- **render.yaml has NO `databases:` block** — Render's free plan allows only ONE free Postgres per
+  account (would clash with Ilm AI's). So the backend runs on **built-in SQLite**.
+
+### AI — REAL Gemini live (verified 2026-07-20)
+`GEMINI_API_KEY` is now set on Render → the AI is **no longer the mock fallback**. Verified
+end-to-end by uploading a real service contract: it returned `risk_level: high`, **7 clause flags**
+(HIGH/MED/LOW) each with genuine Uzbek legal reasoning, **5 extracted key dates**, and a grounded,
+clause-numbered chat answer. (Mock mode is detectable by the literal word "mock" in the output — it
+was gone.) Two minor quirks noticed: `risk_score` scale looks off (returned `1.0` for a HIGH doc —
+UI shows the level word, so cosmetic), and `compliance_scores` came back 0/0/0 for a contract with
+no data-protection clauses (arguably correct, but looks empty in the UI). Payme checkout returns a
+real **test** URL (`checkout.test.paycom.uz`, `PAYME_TEST_MODE=true`).
+
+### ⚠️ Known limitation — ephemeral data
+Render free tier = **SQLite in ephemeral storage → all users/documents are WIPED on every
+redeploy/restart.** Fine for a test/demo; for real users add a free **Neon Postgres**
+(https://neon.tech) and set its `postgresql://…` URL as **`DATABASE_URL`** on Render (the backend
+auto-converts to async — see `_normalize_db_url`). Not done yet.
+
+### Custom domain `vakil-ai.com` — owned but DNS broken (not done)
+The user owns **vakil-ai.com** (registrar joker.com); the Vercel deployment is already aliased to
+`www.vakil-ai.com`. But its nameservers are `DIRECTI1/2.IRANDNS.COM`, which **don't answer** ("No
+Reachable Authority") → the domain doesn't resolve anywhere. To use it: at the registrar, switch
+nameservers to Vercel's (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`) **or** add `A @ 76.76.21.21`
++ `CNAME www cname.vercel-dns.com` (use the exact values Vercel's Domains tab shows). Once fixed,
+`vakil-ai.com` is more professional than any `.vercel.app`.
+
+### Secrets used this session (rotate/revoke when done)
+Deploys were driven with a **Vercel token** (`vcp_…`) and a **Render API key** (`rnd_…`) the user
+pasted. These are account-scoped — the user should revoke them when they no longer want CLI/API
+access.
+
+## Still optional (not done)
+- Real Payme/Click **production** keys on Render (Payme is in test mode now — `PAYME_TEST_MODE=true`).
+- Neon Postgres for persistent data (see limitation above).
+- (done) `GEMINI_API_KEY` is set — AI is live/real.
+- Fix `vakil-ai.com` DNS; then add it (and drop `-uz`) as the primary origin.
+- A dedicated web camera-scan UX, history search, Telegram-link flow on web.
+- Remove `TestModeBanner` when leaving test mode.

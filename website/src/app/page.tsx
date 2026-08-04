@@ -7,6 +7,7 @@ import {
   ShieldCheck, ScanLine, MessagesSquare, CalendarClock, FileSearch, Languages,
   Lock, Check, ArrowRight, Menu, X, Sparkles,
 } from "lucide-react";
+import { track } from "@vercel/analytics";
 import DemoShowcase from "@/components/DemoShowcase";
 import LangSwitcher from "@/components/LangSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -106,7 +107,7 @@ export default function Page() {
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-5 text-lg text-white/70 max-w-md leading-relaxed">{t("hero_p")}</motion.p>
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
-              <a href="/register" className="inline-flex items-center gap-2 bg-emerald hover:bg-emerald-dark text-navy-darkest font-bold px-6 py-3.5 rounded-2xl transition-colors">
+              <a href="/register" onClick={() => track("register_start", { from: "hero" })} className="inline-flex items-center gap-2 bg-emerald hover:bg-emerald-dark text-navy-darkest font-bold px-6 py-3.5 rounded-2xl transition-colors">
                 {t("hero_cta1")} <ArrowRight className="w-4 h-4" />
               </a>
               <a href="#how" className="inline-flex items-center gap-2 border border-white/15 hover:bg-white/5 font-bold px-6 py-3.5 rounded-2xl transition-colors">{t("hero_cta2")}</a>
@@ -188,7 +189,7 @@ export default function Page() {
                 <li key={k} className="flex items-center gap-2.5 text-white/80"><Check className="w-4 h-4 text-emerald shrink-0" /> {t(k)}</li>
               ))}
             </ul>
-            <a href="/register" className="mt-7 block text-center border border-white/15 hover:bg-white/5 font-bold py-3 rounded-2xl transition-colors">{t("nav_start")}</a>
+            <a href="/register" onClick={() => track("free_start")} className="mt-7 block text-center border border-white/15 hover:bg-white/5 font-bold py-3 rounded-2xl transition-colors">{t("nav_start")}</a>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="rounded-3xl p-7 relative overflow-hidden border-2 border-emerald/40 bg-gradient-to-br from-emerald/10 to-gold/5">
             <span className="absolute top-5 right-5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-gold text-navy-darkest">{t("popular")}</span>
@@ -199,7 +200,7 @@ export default function Page() {
                 <li key={k} className="flex items-center gap-2.5 text-white/90"><Check className="w-4 h-4 text-emerald shrink-0" /> {t(k)}</li>
               ))}
             </ul>
-            <a href="/register" className="mt-7 block text-center bg-emerald hover:bg-emerald-dark text-navy-darkest font-bold py-3 rounded-2xl transition-colors">{t("get_premium")}</a>
+            <a href="/register" onClick={() => track("premium_intent")} className="mt-7 block text-center bg-emerald hover:bg-emerald-dark text-navy-darkest font-bold py-3 rounded-2xl transition-colors">{t("get_premium")}</a>
           </motion.div>
         </div>
         <p className="text-center text-xs text-white/40 mt-5">{t("pay_note")}</p>

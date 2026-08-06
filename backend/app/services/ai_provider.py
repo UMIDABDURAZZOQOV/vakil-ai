@@ -325,8 +325,114 @@ VERSION B (new):
         )
 
 
+class OpenAIAIProvider(AIProvider):
+    """OpenAI-backed provider — reuses the OpenAI key/free tokens the owner already
+    has. Same prompts/shape as the Gemini provider, via chat.completions."""
+
+    def __init__(self, api_key: str, model: str) -> None:
+        from openai import AsyncOpenAI
+
+        self._client = AsyncOpenAI(api_key=api_key)
+        self._model = model
+
+    async def _chat(self, prompt: str, json_mode: bool = False) -> str:
+        kwargs: dict = {"model": self._model, "messages": [{"role": "user", "content": prompt}]}
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        resp = await self._client.chat.completions.create(**kwargs)
+        return resp.choices[0].message.content or ""
+
+    async def analyze_document(self, text: str, language: str = "uz") -> DocumentAnalysisResult:
+        prompt = f"""You are a legal-document risk analyst for everyday, non-lawyer users in Uzbekistan.
+Analyze the CONTRACT below and respond ONLY with a strict JSON object of this shape:
+{{"risk_level":"high|medium|low","risk_score":number(0-10, 10=safest),
+"summary_bullets":string[] (plain {language}),"key_dates":string[] ({language}),
+"compliance_scores":{{"GDPR":number,"CCPA":number,"HIPAA":number}},
+"flags":[{{"title":string,"risk_level":"high|medium|low","explanation":string}}]}}
+Every risk_level MUST be exactly "high","medium" or "low" (never translated); all other strings in {language}.
+Be specific to the actual clauses — no generic filler.
+
+CONTRACT:
+{text}
+"""
+        data = json.loads(await self._chat(prompt, json_mode=True))
+        return DocumentAnalysisResult(
+            risk_level=_normalize_risk_level(data.get("risk_level")),
+            risk_score=float(data.get("risk_score", 5.0)),
+            summary_bullets=data.get("summary_bullets", []),
+            key_dates=data.get("key_dates", []),
+            compliance_scores=data.get("compliance_scores", {}),
+            flags=[
+                ClauseFlagResult(title=f["title"], risk_level=_normalize_risk_level(f.get("risk_level")), explanation=f["explanation"])
+                for f in data.get("flags", [])
+            ],
+        )
+
+    async def chat_reply(self, document_text: str, history: list[tuple[bool, str]], question: str) -> str:
+        history_text = "\n".join(f"{'User' if is_user else 'AI'}: {t}" for is_user, t in history)
+        prompt = f"""You are Vakil AI's legal companion. Answer ONLY using the document below — if the
+question needs general legal knowledge beyond it, say so explicitly. Cite the relevant clause when possible.
+
+DOCUMENT:
+{document_text}
+
+CONVERSATION SO FAR:
+{history_text}
+
+QUESTION: {question}
+"""
+        return await self._chat(prompt)
+
+    async def generate_template(self, template_type: str, fields: dict, language: str = "uz") -> str:
+        field_lines = "\n".join(f"- {k}: {v}" for k, v in (fields or {}).items())
+        prompt = f"""You are a legal document drafter for Uzbekistan. Draft a complete, ready-to-use
+{template_type} in plain, correct {language}. Use the details below; for missing details insert a
+clearly bracketed placeholder like [To'ldiring: ...]. Produce the FULL document with numbered clauses,
+parties, obligations, dates and signature lines. Output ONLY the document text.
+
+DETAILS:
+{field_lines}
+"""
+        return await self._chat(prompt)
+
+    async def answer_legal(self, question: str, language: str = "uz") -> str:
+        prompt = f"""You are Vakil AI, a legal information assistant for everyday people in Uzbekistan.
+Answer the question in clear, plain {language}, practical and specific to Uzbek law where relevant.
+Use short paragraphs or bullets. If it truly needs a licensed lawyer, say so briefly at the end.
+Do NOT invent statute numbers you are unsure of.
+
+QUESTION: {question}
+"""
+        return await self._chat(prompt)
+
+    async def compare_documents(self, text_a: str, text_b: str, language: str = "uz") -> DocumentCompareResult:
+        prompt = f"""Compare two versions of a contract for a non-lawyer in Uzbekistan. Respond ONLY with a
+strict JSON object: {{"summary":string ({language}),"changes":[{{"kind":"added|removed|changed",
+"title":string,"detail":string,"risk_level":"high|medium|low"}}]}}. title/detail/summary in {language};
+kind and risk_level exactly those English tokens. risk_level = how bad the change is FOR THE USER.
+Focus on meaningful changes (money, penalties, dates, obligations, termination).
+
+VERSION A (old):
+{text_a}
+
+VERSION B (new):
+{text_b}
+"""
+        data = json.loads(await self._chat(prompt, json_mode=True))
+        return DocumentCompareResult(
+            summary=data.get("summary", ""),
+            changes=[
+                DiffChange(kind=str(c.get("kind", "changed")).lower(), title=c.get("title", ""),
+                           detail=c.get("detail", ""), risk_level=_normalize_risk_level(c.get("risk_level")))
+                for c in data.get("changes", [])
+            ],
+        )
+
+
 @lru_cache
 def get_ai_provider() -> AIProvider:
+    if settings.openai_api_key:
+        return OpenAIAIProvider(settings.openai_api_key, settings.openai_model)
     if settings.gemini_api_key:
         return GeminiAIProvider(settings.gemini_api_key)
     return MockAIProvider()

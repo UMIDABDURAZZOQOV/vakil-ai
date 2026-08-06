@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     allowed_origins: str = "*"
 
     gemini_api_key: str | None = None
+    # OpenAI is preferred over Gemini when set (reuses the key/free tokens the owner
+    # already has). Falls back to Gemini, then the keyword mock, if unset.
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-5-mini"
     free_tier_document_limit: int = 2
 
     upload_dir: str = "uploads"

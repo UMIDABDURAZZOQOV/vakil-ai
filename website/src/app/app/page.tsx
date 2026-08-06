@@ -20,6 +20,22 @@ import { useLang, riskLabelI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
 
+// A deliberately risky rental contract so the demo always has something powerful
+// to analyze (auto-renewal, 15% annual hikes, one-sided termination, 200% penalty,
+// unlimited liability) — no real file needed, and it shows the AI catching real teeth.
+const SAMPLE_CONTRACT = `IJARA SHARTNOMASI
+
+1. Tomonlar: Ijaraga beruvchi "Alfa Ko'chmas Mulk" MChJ, Ijaraga oluvchi ____________.
+2. Ob'ekt: Toshkent sh., Chilonzor tumani, 3-mavze, 25-xonadon (2 xonali kvartira).
+3. Muddat: Shartnoma 12 oy muddatga tuziladi va har yili AVTOMATIK uzaytiriladi, agar tomonlardan biri 60 kun oldin yozma bekor qilmasa.
+4. To'lov: Oylik ijara haqi 4 000 000 so'm. Ijara haqi har yili 15% ga oshiriladi.
+5. Kafolat puli: 3 oylik ijara miqdorida (12 000 000 so'm), qaytarilmaydi.
+6. Bekor qilish: Ijaraga BERUVCHI istalgan vaqtda, sababsiz, 10 kun oldin ogohlantirib bekor qilishi mumkin. Ijaraga OLUVCHI faqat muddat oxirida bekor qila oladi.
+7. Jarima: Ijaraga oluvchi muddatidan oldin bekor qilsa, oylik to'lovning 200% miqdorida jarima to'laydi.
+8. Ta'mirlash: Barcha ta'mirlash, jumladan tabiiy eskirish, Ijaraga oluvchi hisobidan.
+9. Javobgarlik: Ijaraga oluvchi xonadondagi har qanday zarar uchun CHEKSIZ javobgar.
+10. Nizolar: Barcha nizolar faqat Ijaraga beruvchi tanlagan sudda ko'riladi.`;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { t } = useLang();
@@ -148,6 +164,18 @@ export default function DashboardPage() {
           )}
         </button>
         {msg && <p className={`text-sm mt-3 font-medium ${msg.ok ? "text-emerald" : "text-risk-high"}`}>{msg.text}</p>}
+
+        {/* Try a sample — guarantees a strong demo without needing a real file */}
+        {!uploading && (
+          <div className="text-center mt-3">
+            <button
+              onClick={() => onFile(new File([SAMPLE_CONTRACT], "Ijara shartnomasi (namuna).txt", { type: "text/plain" }))}
+              className="text-sm font-bold text-emerald hover:text-emerald-dark transition-colors"
+            >
+              {t("try_sample")} →
+            </button>
+          </div>
+        )}
 
         {/* Tools */}
         <div className="mt-8">

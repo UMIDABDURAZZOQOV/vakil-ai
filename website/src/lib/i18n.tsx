@@ -103,6 +103,8 @@ const T: Record<Lang, Dict> = {
     cmp_old: "Eski versiya", cmp_new: "Yangi versiya", cmp_paste_old: "Eski matnni joylashtiring…", cmp_paste_new: "Yangi matnni joylashtiring…",
     cmp_run: "Solishtirish", cmp_running: "Solishtirilyapti…", cmp_summary: "Xulosa", cmp_changes: "O'zgarishlar",
     cmp_added: "Qo'shilgan", cmp_removed: "Olib tashlangan", cmp_changed: "O'zgargan",
+    try_sample: "Namuna shartnoma bilan sinab ko'ring", or: "yoki",
+    deadlines: "Muhim muddatlar", remind_tg: "Telegramda eslatish", reminder_set: "Eslatma o'rnatildi ✓", connect_tg_first: "Avval Telegram'ni ulang (Sozlamalar).",
   },
   ru: {
     nav_features: "Возможности", nav_how: "Как это работает", nav_pricing: "Цены",
@@ -185,6 +187,8 @@ const T: Record<Lang, Dict> = {
     cmp_old: "Старая версия", cmp_new: "Новая версия", cmp_paste_old: "Вставьте старый текст…", cmp_paste_new: "Вставьте новый текст…",
     cmp_run: "Сравнить", cmp_running: "Сравниваем…", cmp_summary: "Итог", cmp_changes: "Изменения",
     cmp_added: "Добавлено", cmp_removed: "Удалено", cmp_changed: "Изменено",
+    try_sample: "Попробуйте на образце договора", or: "или",
+    deadlines: "Важные сроки", remind_tg: "Напомнить в Telegram", reminder_set: "Напоминание установлено ✓", connect_tg_first: "Сначала подключите Telegram (Настройки).",
   },
   en: {
     nav_features: "Features", nav_how: "How it works", nav_pricing: "Pricing",
@@ -267,6 +271,8 @@ const T: Record<Lang, Dict> = {
     cmp_old: "Old version", cmp_new: "New version", cmp_paste_old: "Paste the old text…", cmp_paste_new: "Paste the new text…",
     cmp_run: "Compare", cmp_running: "Comparing…", cmp_summary: "Summary", cmp_changes: "Changes",
     cmp_added: "Added", cmp_removed: "Removed", cmp_changed: "Changed",
+    try_sample: "Try it on a sample contract", or: "or",
+    deadlines: "Key deadlines", remind_tg: "Remind me on Telegram", reminder_set: "Reminder set ✓", connect_tg_first: "Connect Telegram first (Settings).",
   },
 };
 

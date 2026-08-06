@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Upload, FileText, LogOut, Crown, ShieldAlert, ArrowRight, Settings } from "lucide-react";
+import { Loader2, Upload, FileText, LogOut, Crown, ShieldAlert, ArrowRight, Settings, FilePlus, Scale, GitCompare } from "lucide-react";
 import {
   getToken,
   clearToken,
@@ -148,6 +148,26 @@ export default function DashboardPage() {
           )}
         </button>
         {msg && <p className={`text-sm mt-3 font-medium ${msg.ok ? "text-emerald" : "text-risk-high"}`}>{msg.text}</p>}
+
+        {/* Tools */}
+        <div className="mt-8">
+          <p className="text-xs font-extrabold uppercase tracking-wider text-white/40 mb-3">{t("tools")}</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { href: "/app/templates", icon: FilePlus, title: t("tools_templates"), desc: t("tools_templates_desc"), color: "#22C58B" },
+              { href: "/app/ask", icon: Scale, title: t("tools_legal"), desc: t("tools_legal_desc"), color: "#1CB0F6" },
+              { href: "/app/compare", icon: GitCompare, title: t("tools_compare"), desc: t("tools_compare_desc"), color: "#F2A93B" },
+            ].map((tool) => (
+              <Link key={tool.href} href={tool.href} className="glass rounded-2xl p-4 hover:border-emerald/40 transition-colors">
+                <div className="w-10 h-10 rounded-xl grid place-items-center mb-3" style={{ backgroundColor: `${tool.color}1f` }}>
+                  <tool.icon className="w-5 h-5" style={{ color: tool.color }} />
+                </div>
+                <p className="font-bold text-sm">{tool.title}</p>
+                <p className="text-xs text-white/40 mt-0.5 leading-snug">{tool.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
 
         {/* Documents */}
         <div className="mt-8">

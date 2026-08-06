@@ -125,6 +125,32 @@ export async function createCheckout(provider: "payme" | "click") {
   });
 }
 
+// ─── Tools (templates / legal Q&A / compare) ──────────────────────────────────
+export async function generateTemplate(templateType: string, fields: Record<string, string>, language: string) {
+  return request<{ document: string }>("/tools/template", {
+    method: "POST",
+    body: JSON.stringify({ template_type: templateType, fields, language }),
+  });
+}
+export async function askLegal(question: string, language: string) {
+  return request<{ answer: string }>("/tools/legal", {
+    method: "POST",
+    body: JSON.stringify({ question, language }),
+  });
+}
+export interface DiffChange {
+  kind: string; // added | removed | changed
+  title: string;
+  detail: string;
+  risk_level: string; // high | medium | low
+}
+export async function compareDocuments(textA: string, textB: string, language: string) {
+  return request<{ summary: string; changes: DiffChange[] }>("/tools/compare", {
+    method: "POST",
+    body: JSON.stringify({ text_a: textA, text_b: textB, language }),
+  });
+}
+
 export function riskColor(level: string): string {
   return level === "high" ? "#E15554" : level === "medium" ? "#F2A93B" : "#2ECC8F";
 }

@@ -66,11 +66,34 @@ class DocumentAnalysisResult:
     flags: list[ClauseFlagResult] = field(default_factory=list)
 
 
+@dataclass
+class DiffChange:
+    kind: str           # "added" | "removed" | "changed"
+    title: str
+    detail: str
+    risk_level: str     # high | medium | low — is this change bad for the user?
+
+
+@dataclass
+class DocumentCompareResult:
+    summary: str
+    changes: list[DiffChange] = field(default_factory=list)
+
+
 class AIProvider:
     async def analyze_document(self, text: str, language: str = "uz") -> DocumentAnalysisResult:
         raise NotImplementedError
 
     async def chat_reply(self, document_text: str, history: list[tuple[bool, str]], question: str) -> str:
+        raise NotImplementedError
+
+    async def generate_template(self, template_type: str, fields: dict, language: str = "uz") -> str:
+        raise NotImplementedError
+
+    async def answer_legal(self, question: str, language: str = "uz") -> str:
+        raise NotImplementedError
+
+    async def compare_documents(self, text_a: str, text_b: str, language: str = "uz") -> DocumentCompareResult:
         raise NotImplementedError
 
 
@@ -128,6 +151,26 @@ class MockAIProvider(AIProvider):
             "Bu — mock javob. Savolingiz: \"" + question + "\". "
             "GEMINI_API_KEY sozlanganda, javob faqat yuklangan hujjatingiz matniga asoslanadi "
             "va aniq band raqami bilan keltiriladi."
+        )
+
+    async def generate_template(self, template_type: str, fields: dict, language: str = "uz") -> str:
+        body = "\n".join(f"- {k}: {v}" for k, v in (fields or {}).items())
+        return (
+            f"[{template_type.upper()} — NAMUNA]\n\n"
+            f"Kiritilgan ma'lumotlar:\n{body}\n\n"
+            "(Mock: GEMINI_API_KEY sozlanganda bu yerda to'liq, tayyor hujjat matni yaratiladi.)"
+        )
+
+    async def answer_legal(self, question: str, language: str = "uz") -> str:
+        return (
+            "Bu — mock javob. GEMINI_API_KEY sozlanganda haqiqiy yuridik javob keladi.\n\n"
+            f"Savolingiz: {question}"
+        )
+
+    async def compare_documents(self, text_a: str, text_b: str, language: str = "uz") -> DocumentCompareResult:
+        return DocumentCompareResult(
+            summary="Mock taqqoslash — GEMINI_API_KEY sozlanganda haqiqiy farqlar chiqadi.",
+            changes=[DiffChange(kind="changed", title="Namuna o'zgarish", detail="Mock", risk_level="low")],
         )
 
 
@@ -207,6 +250,79 @@ QUESTION: {question}
             config=types.GenerateContentConfig(),
         )
         return response.text or ""
+
+    async def generate_template(self, template_type: str, fields: dict, language: str = "uz") -> str:
+        field_lines = "\n".join(f"- {k}: {v}" for k, v in (fields or {}).items())
+        prompt = f"""You are a legal document drafter for Uzbekistan. Draft a complete, ready-to-use
+{template_type} in plain, correct {language}. Use the details below; where a detail is missing,
+insert a clearly bracketed placeholder like [To'ldiring: ...]. Produce the FULL document with
+numbered clauses, parties, obligations, dates and signature lines — professional but readable.
+Output ONLY the document text (no commentary, no markdown fences).
+
+DETAILS:
+{field_lines}
+"""
+        response = await self._client.aio.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=types.GenerateContentConfig(),
+        )
+        return response.text or ""
+
+    async def answer_legal(self, question: str, language: str = "uz") -> str:
+        prompt = f"""You are Vakil AI, a legal information assistant for everyday people in Uzbekistan.
+Answer the question below in clear, plain {language}. Be practical and specific to Uzbek law and
+procedures where relevant. Use short paragraphs or bullet points. If the matter is high-stakes or
+truly needs a licensed lawyer, say so briefly at the end. Do NOT invent statute numbers you are
+unsure of.
+
+QUESTION: {question}
+"""
+        response = await self._client.aio.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=types.GenerateContentConfig(),
+        )
+        return response.text or ""
+
+    async def compare_documents(self, text_a: str, text_b: str, language: str = "uz") -> DocumentCompareResult:
+        from google.genai import types
+
+        prompt = f"""Compare two versions of a contract for a non-lawyer in Uzbekistan. Identify what
+changed from VERSION A (old) to VERSION B (new). Respond ONLY with strict JSON:
+{{
+  "summary": string (one plain-language sentence in {language}),
+  "changes": [{{"kind": "added"|"removed"|"changed", "title": string, "detail": string,
+               "risk_level": "high"|"medium"|"low"}}]
+}}
+title/detail/summary must be in {language}. risk_level is how BAD the change is FOR THE USER
+(high = worse for them). kind and risk_level MUST be the exact English tokens. Focus on meaningful
+changes (money, penalties, dates, obligations, termination) — ignore trivial wording.
+
+VERSION A (old):
+{text_a}
+
+VERSION B (new):
+{text_b}
+"""
+        response = await self._client.aio.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type="application/json"),
+        )
+        data = json.loads(response.text)
+        return DocumentCompareResult(
+            summary=data.get("summary", ""),
+            changes=[
+                DiffChange(
+                    kind=str(c.get("kind", "changed")).lower(),
+                    title=c.get("title", ""),
+                    detail=c.get("detail", ""),
+                    risk_level=_normalize_risk_level(c.get("risk_level")),
+                )
+                for c in data.get("changes", [])
+            ],
+        )
 
 
 @lru_cache
